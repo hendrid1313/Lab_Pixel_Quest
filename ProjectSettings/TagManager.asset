@@ -8,6 +8,9 @@ TagManager:
   - Death
   - Health
   - Coin
+  - Enemy
+  - TalkZone
+  - Bullet
   layers:
   - Default
   - TransparentFX
