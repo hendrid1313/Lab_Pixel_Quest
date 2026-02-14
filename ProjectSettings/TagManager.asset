@@ -11,6 +11,7 @@ TagManager:
   - Enemy
   - TalkZone
   - Bullet
+  - Ground
   layers:
   - Default
   - TransparentFX
