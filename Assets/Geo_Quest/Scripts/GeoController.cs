@@ -1,26 +1,64 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GeoController : MonoBehaviour
-{ public int counter = 0;
-    string playerName = "Hello World";
+{
+    private Rigidbody2D rb;
+    public int speed = 5;
+    public string nextlevel = "Scene";
 
-    // Start is called before the first frame update
-    public void Start()
-    { 
-        Debug.Log("hasdasd");
-    
+    // SpriteRenderer reference for color change
+    private SpriteRenderer spriteRenderer;
+
+    // Colors to switch between
+    public Color color1 = Color.red;
+    public Color color2 = Color.green;
+    public Color color3 = Color.blue;
+
+    void Start()
+    {
+        rb = GetComponent<Rigidbody2D>();
+        spriteRenderer = GetComponent<SpriteRenderer>();
+
+        if (spriteRenderer == null)
+        {
+            Debug.LogError("No SpriteRenderer found on this GameObject!");
+        }
     }
 
-    // Update is called once per frame
-    private void Update()
-    { 
-        Debug.Log(counter);
-    counter++;
+    void Update()
+    {
+        // --- Movement ---
+        float xInput = Input.GetAxis("Horizontal");
+        rb.velocity = new Vector2(xInput * speed, rb.velocity.y);
 
-     if (Input.GetkeyDown(KeyCode.W));
-    trasnform.position += new Vector(0, 1, 0);
-
+        // --- Color change ---
+        if (Input.GetKeyDown(KeyCode.Alpha1))
+        {
+            spriteRenderer.color = color1;
+        }
+        else if (Input.GetKeyDown(KeyCode.Alpha2))
+        {
+            spriteRenderer.color = color2;
+        }
+        else if (Input.GetKeyDown(KeyCode.Alpha3))
+        {
+            spriteRenderer.color = color3;
+        }
     }
-}
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.CompareTag("Death"))
+        {
+            string thislevel = SceneManager.GetActiveScene().name;
+            SceneManager.LoadScene(thislevel);
+        }
+        else if (collision.CompareTag("Finish"))
+        {
+            SceneManager.LoadScene(nextlevel);
+        }
+    }
+} // <-- FINAL closing brace for the class
