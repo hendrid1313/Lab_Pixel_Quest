@@ -12,11 +12,13 @@ TagManager:
   - TalkZone
   - Bullet
   - Ground
+  - Bounce
+  - Bounds
   layers:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - yellowplatform
   - Water
   - UI
   - Coin
