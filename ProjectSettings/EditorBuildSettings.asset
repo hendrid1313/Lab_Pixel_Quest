@@ -15,6 +15,9 @@ EditorBuildSettings:
     path: Assets/Geo_Quest/Scenes/Level 2.unity
     guid: 51c98790f1ad7ed4b9d8655a3cfb7069
   - enabled: 1
+    path: Assets/Geo_Quest/Scenes/Level 3.unity
+    guid: dc40cdb62d74e3a4b934219332b209e9
+  - enabled: 1
     path: Assets/Pixel_Quest/Scenes/Pixel_Quest_TestLevel.unity
     guid: 2cda990e2423bbf4892e6590ba056729
   - enabled: 0
