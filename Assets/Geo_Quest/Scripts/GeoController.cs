@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class GeoController : MonoBehaviour
@@ -76,7 +76,6 @@ public class GeoController : MonoBehaviour
     void FixedUpdate()
     {
         float currentSpeed = isInWater ? originalSpeed * waterSlowMultiplier : originalSpeed;
-
         rb.velocity = new Vector2(currentSpeed, rb.velocity.y);
 
         if (rb.velocity.y < 0)
@@ -92,14 +91,21 @@ public class GeoController : MonoBehaviour
             cameraTransform.position = new Vector3(transform.position.x + cameraOffsetX, 0, -10);
     }
 
+    // ✅ COLLISION (SOLID OBJECTS)
     private void OnCollisionEnter2D(Collision2D collision)
     {
+        // Ground logic
         if (collision.gameObject.CompareTag("Ground"))
         {
             isGrounded = true;
 
             targetRotation = Mathf.Round(targetRotation / 90f) * 90f;
             visualCube.rotation = Quaternion.Euler(0, 0, targetRotation);
+        }
+        else
+        {
+            // 💀 ANYTHING NOT GROUND = DEATH
+            Die();
         }
     }
 
@@ -109,11 +115,12 @@ public class GeoController : MonoBehaviour
             isGrounded = false;
     }
 
+    // ✅ TRIGGERS (optional special objects)
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.CompareTag("Death"))
         {
-            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+            Die();
         }
         else if (collision.CompareTag("Finish"))
         {
@@ -144,6 +151,11 @@ public class GeoController : MonoBehaviour
         targetRotation -= 90f;
 
         HandlePlatformFall(normalPlatformLayer);
+    }
+
+    private void Die()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     private void LoadNextLevel()
