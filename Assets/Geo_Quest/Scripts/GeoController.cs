@@ -35,6 +35,7 @@ public class GeoController : MonoBehaviour
     private float coyoteCounter;
     private float originalSpeed;
     private bool isInWater = false;
+    public bool isMoving = true;
 
     void Start()
     {
@@ -76,7 +77,14 @@ public class GeoController : MonoBehaviour
     void FixedUpdate()
     {
         float currentSpeed = isInWater ? originalSpeed * waterSlowMultiplier : originalSpeed;
-        rb.velocity = new Vector2(currentSpeed, rb.velocity.y);
+
+        if(isMoving){
+            rb.velocity = new Vector2(currentSpeed, rb.velocity.y);
+        }
+        else{
+            float move = Input.GetAxis("Horizontal");
+             rb.velocity = new Vector2(move * speed, rb.velocity.y);
+        }
 
         if (rb.velocity.y < 0)
             HandlePlatformFall(normalPlatformLayer);
