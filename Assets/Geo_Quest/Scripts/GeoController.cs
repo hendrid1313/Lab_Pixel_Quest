@@ -3,70 +3,89 @@ using UnityEngine.SceneManagement;
 
 public class GeoController : MonoBehaviour
 {
-    [Header("Movement Settings")]
+    [Header("Movement")]
     public float speed = 7f;
     public float jumpForce = 11f;
     public float bounceForce = 30f;
 
-    [Header("Camera Settings")]
+    [Header("Camera")]
     public Transform cameraTransform;
     public float cameraOffsetX = 6f;
 
-    [Header("Visual Settings")]
+    [Header("Visual")]
     public Transform visualCube;
     public float rotationSpeed = 720f;
 
-    [Header("Jump Feel Settings")]
+    [Header("Feel")]
     public float coyoteTime = 0.1f;
 
-    [Header("Platform Settings")]
+    [Header("Platforms")]
     public int normalPlatformLayer = 8;
     public int yellowPlatformLayer = 9;
     public float fallThroughTime = 0.2f;
 
-    [Header("Water Settings")]
+    [Header("Water")]
     public string waterTag = "Water";
     public float waterSlowMultiplier = 0.5f;
 
     private Rigidbody2D rb;
     private Collider2D playerCollider;
+    private SpriteRenderer sr;
+
     private bool isGrounded;
-    private float targetRotation = 0f;
+    private bool isInWater;
+    private float targetRotation;
     private float coyoteCounter;
-    private float originalSpeed;
-    private bool isInWater = false;
+    private float baseSpeed;
+
     public bool isMoving = true;
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         playerCollider = GetComponent<Collider2D>();
+        sr = GetComponent<SpriteRenderer>();
+
         rb.gravityScale = 6.5f;
 
         if (visualCube == null)
             visualCube = transform;
 
-        originalSpeed = speed;
+        baseSpeed = speed;
     }
 
     void Update()
     {
+        // Coyote time
         coyoteCounter -= Time.deltaTime;
+        if (isGrounded) coyoteCounter = coyoteTime;
 
-        if (isGrounded)
-            coyoteCounter = coyoteTime;
-
+        // Jump
         if (Input.GetKeyDown(KeyCode.Space) && coyoteCounter > 0)
-        {
-            Jump(jumpForce);
-        }
+            Jump();
 
+        // Fall through platforms
         if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))
         {
             HandlePlatformFall(normalPlatformLayer);
             HandlePlatformFall(yellowPlatformLayer);
         }
 
+        // Color switching 
+        switch (true)
+        {
+            case bool _ when Input.GetKeyDown(KeyCode.Alpha1):
+                sr.color = Color.red;
+                break;
+            case bool _ when Input.GetKeyDown(KeyCode.Alpha2):
+                sr.color = Color.green;
+                break;
+            case bool _ when Input.GetKeyDown(KeyCode.Alpha3):
+                sr.color = Color.blue;
+                break;
+        }
+
+        // Rotation
         visualCube.rotation = Quaternion.RotateTowards(
             visualCube.rotation,
             Quaternion.Euler(0, 0, targetRotation),
@@ -76,15 +95,12 @@ public class GeoController : MonoBehaviour
 
     void FixedUpdate()
     {
-        float currentSpeed = isInWater ? originalSpeed * waterSlowMultiplier : originalSpeed;
+        float currentSpeed = isInWater ? baseSpeed * waterSlowMultiplier : baseSpeed;
 
-        if(isMoving){
+        if (isMoving)
             rb.velocity = new Vector2(currentSpeed, rb.velocity.y);
-        }
-        else{
-            float move = Input.GetAxis("Horizontal");
-             rb.velocity = new Vector2(move * speed, rb.velocity.y);
-        }
+        else
+            rb.velocity = new Vector2(Input.GetAxis("Horizontal") * speed, rb.velocity.y);
 
         if (rb.velocity.y < 0)
             HandlePlatformFall(normalPlatformLayer);
@@ -99,10 +115,8 @@ public class GeoController : MonoBehaviour
             cameraTransform.position = new Vector3(transform.position.x + cameraOffsetX, 0, -10);
     }
 
-    // ✅ COLLISION (SOLID OBJECTS)
-    private void OnCollisionEnter2D(Collision2D collision)
+    void OnCollisionEnter2D(Collision2D collision)
     {
-        // Ground logic
         if (collision.gameObject.CompareTag("Ground"))
         {
             isGrounded = true;
@@ -112,80 +126,82 @@ public class GeoController : MonoBehaviour
         }
         else
         {
-            // 💀 ANYTHING NOT GROUND = DEATH
             Die();
         }
     }
 
-    private void OnCollisionExit2D(Collision2D collision)
+    void OnCollisionExit2D(Collision2D collision)
     {
         if (collision.gameObject.CompareTag("Ground"))
             isGrounded = false;
     }
 
-    // ✅ TRIGGERS (optional special objects)
-    private void OnTriggerEnter2D(Collider2D collision)
+    //  SWITCH CASE FOR ALL TRIGGERS
+    void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.CompareTag("Death"))
+        switch (collision.tag)
         {
-            Die();
-        }
-        else if (collision.CompareTag("Finish"))
-        {
-            LoadNextLevel();
-        }
-        else if (collision.CompareTag("Bounce"))
-        {
-            rb.velocity = new Vector2(speed, bounceForce);
-            isGrounded = false;
-            targetRotation -= 90f;
-        }
-        else if (collision.CompareTag(waterTag))
-        {
-            isInWater = true;
+            case "Death":
+                Die();
+                break;
+
+            case "Finish":
+                LoadNextLevel();
+                break;
+
+            case "Bounce":
+                rb.velocity = new Vector2(speed, bounceForce);
+                isGrounded = false;
+                targetRotation -= 90f;
+                break;
+
+            case "Coin":
+                Destroy(collision.gameObject);
+                break;
+
+            default:
+                if (collision.CompareTag(waterTag))
+                    isInWater = true;
+                break;
         }
     }
 
-    private void OnTriggerExit2D(Collider2D collision)
+    void OnTriggerExit2D(Collider2D collision)
     {
         if (collision.CompareTag(waterTag))
             isInWater = false;
     }
 
-    private void Jump(float force)
+    void Jump()
     {
-        rb.velocity = new Vector2(speed, force);
+        rb.velocity = new Vector2(speed, jumpForce);
         isGrounded = false;
         targetRotation -= 90f;
 
         HandlePlatformFall(normalPlatformLayer);
     }
 
-    private void Die()
+    void Die()
     {
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
-    private void LoadNextLevel()
+    void LoadNextLevel()
     {
-        int currentSceneIndex = SceneManager.GetActiveScene().buildIndex;
-        SceneManager.LoadScene(currentSceneIndex + 1);
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
     }
 
-    private void HandlePlatformFall(int layer)
+    void HandlePlatformFall(int layer)
     {
         ContactFilter2D filter = new ContactFilter2D();
         filter.SetLayerMask(1 << layer);
-        Collider2D[] results = new Collider2D[1];
 
-        int count = playerCollider.OverlapCollider(filter, results);
-        if (count > 0)
-        {
-            StartCoroutine(FallThroughCollider(results[0]));
-        }
+        Collider2D[] results = new Collider2D[1];
+        if (playerCollider.OverlapCollider(filter, results) > 0)
+            StartCoroutine(FallThrough(results[0]));
     }
 
-    private System.Collections.IEnumerator FallThroughCollider(Collider2D platform)
+    System.Collections.IEnumerator FallThrough(Collider2D platform)
     {
         if (platform == null) yield break;
 
